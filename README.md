@@ -29,81 +29,38 @@ Fully containerized using Docker. Deploys a FastAPI backend and Streamlit fronte
 
 Unlike traditional pipelines that retrieve context and immediately generate answers, this system introduces a structured evaluation pipeline.
 
-**Self-RAG Evaluation and Correction Flow**
+```mermaid
+graph TD
+    %% Styling for a clean, professional look
+    classDef process fill:#f8fafc,stroke:#64748b,stroke-width:1px,color:#0f172a;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:1px,color:#0f172a;
+    classDef eval fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#0f172a;
+    classDef output fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#0f172a;
 
-<p align="center">
-  <img src="images/workflow.png" alt="Self-RAG Workflow" width="800"/>
-</p>
-
-### How the loop works:
-
-**Routing:**  
-Determines whether the query requires retrieval from the document store or can be answered directly.
-
-**Retrieve Documents:**  
-Fetches relevant chunks from the vector database based on semantic similarity.
-
-**Grade Documents:**  
-Evaluates retrieved documents and discards those that do not meet relevance thresholds.
-
-**Generate Answer:**  
-Produces an answer grounded in the filtered documents.
-
-**Hallucination Check:**  
-Validates whether the generated answer is supported by retrieved evidence.
-
-**Correction Loop:**  
-If hallucination is detected or the answer is incomplete, the system retries retrieval or triggers fallback search.
-
----
-
-## 🛠️ Tech Stack
-
-**Logic & Framework:** LangChain, LangGraph  
-**LLM & Embeddings:** OpenAI (GPT-4 / GPT-3.5)  
-**Vector Store:** ChromaDB  
-**Backend:** FastAPI, Uvicorn  
-**Frontend:** Streamlit  
-**Deployment:** Docker, Docker Compose  
-
----
-
-## 🗂️ The File Map
-
-If you are exploring the codebase, here is a clear breakdown of each component:
-
-### **frontend/** (The User Interface)
-
-- **app.py:** Handles UI rendering, user input, backend communication, and streaming responses.  
-- **Dockerfile:** Defines the container environment for the Streamlit app.  
-- **requirements.txt:** Contains minimal dependencies (Streamlit, requests).
-
----
-
-### **backend/** (The Brain)
-
-- **main.py:** Entry point for the FastAPI server; routes requests to the processing pipeline.  
-- **graph.py:** Implements LangGraph workflows including retrieval, grading, hallucination checks, and correction loops.  
-- **.env:** Stores sensitive credentials such as `OPENAI_API_KEY` (excluded from version control).  
-- **Dockerfile:** Defines the backend container with required AI dependencies.  
-- **requirements.txt:** Lists all backend dependencies (FastAPI, LangChain, OpenAI, ChromaDB, etc.).
-
----
-
-### **Root Files (The Glue)**
-
-- **docker-compose.yml:** Orchestrates frontend and backend containers, enabling seamless communication.  
-- **.gitignore:** Excludes sensitive and unnecessary files (e.g., `.env`, vector databases).  
-- **images/:** Contains architecture diagrams and README assets.
-
----
-
-## 🚀 Quick Start (Local Deployment)
-
-No need to install Python or manage environments—Docker handles everything.
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Ragrawal2004/Self_Correcting_Rag_System.git
-cd Self_Correcting_Rag_System
+    %% Flow Nodes
+    Q([👤 Question]):::process --> Route{🔀 Routing}:::decision
+    
+    Route -- "Related to Index" --> Retrieve[📥 Retrieve Documents]:::process
+    Route -- "Unrelated to Index" --> WebSearch[🌐 Web Search]:::process
+    
+    WebSearch --> Rethink[🧠 Rethink Context]:::process
+    Rethink --> Retrieve
+    
+    Retrieve --> Grade[📝 Grade Documents]:::process
+    Grade --> CheckRelevance{❌ Any doc irrelevant?}:::decision
+    
+    CheckRelevance -- "Yes" --> WebSearch
+    CheckRelevance -- "No" --> Generate[🤖 Generate Answer]:::process
+    
+    Generate --> RAGAS
+    
+    subgraph RAGAS [RAGAS Evaluation Module]
+        direction LR
+        M1[📊 Context Metrics: Precision / Recall]:::eval
+        M2[🛡️ Falsifiability Metric]:::eval
+    end
+    
+    RAGAS --> CheckHall{🤥 Hallucinations? / Answers Question?}:::decision
+    
+    CheckHall -- "Yes / Failed" --> Generate
+    CheckHall -- "No / Passed" --> Out([✅ Final Output]):::output
