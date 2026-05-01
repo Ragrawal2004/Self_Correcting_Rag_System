@@ -1,0 +1,35 @@
+.env
+backend/.env
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+chroma_db/
+faiss_index/
+.DS_Store# Environment variables (NEVER push your API keys!)
+.env
+backend/.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Vector Databases (usually too large for GitHub)
+chroma_db/
+faiss_index/
+weaviate_data/
+*.pkl
+
+# Mac OS junk
+.DS_Store
+
+# Docker volumes (if any local data persists)
+docker-volumes/
