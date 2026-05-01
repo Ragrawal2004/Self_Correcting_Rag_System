@@ -1,4 +1,5 @@
 ## **Self-Correcting RAG System**
+
 A resilient AI agent built to answer questions over your documents with high accuracy.
 
 Standard RAG systems often guess or hallucinate when they fail to retrieve the right context. This system addresses that limitation. Inspired by the Self-RAG approach, it evaluates its own outputs at every step—grading documents, detecting hallucinations, and automatically correcting itself before responding.
@@ -30,19 +31,29 @@ Unlike traditional pipelines that retrieve context and immediately generate answ
 
 **Self-RAG Evaluation and Correction Flow**
 
+<p align="center">
+  <img src="images/workflow.png" alt="Self-RAG Workflow" width="800"/>
+</p>
+
 ### How the loop works:
 
 **Routing:**  
 Determines whether the query requires retrieval from the document store or can be answered directly.
 
+**Retrieve Documents:**  
+Fetches relevant chunks from the vector database based on semantic similarity.
+
 **Grade Documents:**  
 Evaluates retrieved documents and discards those that do not meet relevance thresholds.
 
+**Generate Answer:**  
+Produces an answer grounded in the filtered documents.
+
 **Hallucination Check:**  
-Validates whether the generated answer is grounded in retrieved evidence.
+Validates whether the generated answer is supported by retrieved evidence.
 
 **Correction Loop:**  
-If the response is incomplete or hallucinated, the system re-enters the retrieval phase or triggers fallback strategies.
+If hallucination is detected or the answer is incomplete, the system retries retrieval or triggers fallback search.
 
 ---
 
@@ -62,7 +73,6 @@ If the response is incomplete or hallucinated, the system re-enters the retrieva
 If you are exploring the codebase, here is a clear breakdown of each component:
 
 ### **frontend/** (The User Interface)
-This is the user-facing layer of the application.
 
 - **app.py:** Handles UI rendering, user input, backend communication, and streaming responses.  
 - **Dockerfile:** Defines the container environment for the Streamlit app.  
@@ -71,7 +81,6 @@ This is the user-facing layer of the application.
 ---
 
 ### **backend/** (The Brain)
-This is where the core AI logic resides.
 
 - **main.py:** Entry point for the FastAPI server; routes requests to the processing pipeline.  
 - **graph.py:** Implements LangGraph workflows including retrieval, grading, hallucination checks, and correction loops.  
